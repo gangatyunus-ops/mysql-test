@@ -1,0 +1,158 @@
+import streamlit as st
+import random
+import time
+
+# 1. Full Dataset of 50 Questions extracted from your MySQL document
+ALL_QUESTIONS = [
+    {"q": "Which command is used to create a new database in MySQL?", "options": ["MAKE DATABASE", "CREATE DATABASE", "NEW DATABASE", "ADD DATABASE"], "ans": "CREATE DATABASE", "sol": "The CREATE DATABASE statement is used to create a new database."},
+    {"q": "Which SQL statement is used to retrieve data from a table?", "options": ["GET", "SELECT", "FETCH TABLE", "OPEN"], "ans": "SELECT", "sol": "SELECT is used to retrieve rows and columns from one or more tables."},
+    {"q": "Which clause is used to filter rows in a MySQL query?", "options": ["ORDER BY", "GROUP BY", "WHERE", "FILTER"], "ans": "WHERE", "sol": "The WHERE clause specifies conditions that rows must satisfy."},
+    {"q": "Which command is used to remove a table completely?", "options": ["DELETE TABLE", "REMOVE TABLE", "DROP TABLE", "CLEAR TABLE"], "ans": "DROP TABLE", "sol": "DROP TABLE removes the table structure as well as its data."},
+    {"q": "Which keyword is used to eliminate duplicate rows from a query result?", "options": ["UNIQUE", "DISTINCT", "DIFFERENT", "SINGLE"], "ans": "DISTINCT", "sol": "SELECT DISTINCT column_name returns only unique values."},
+    {"q": "Which constraint uniquely identifies each row in a table?", "options": ["FOREIGN KEY", "UNIQUE", "PRIMARY KEY", "CHECK"], "ans": "PRIMARY KEY", "sol": "A primary key uniquely identifies every record and cannot contain NULL."},
+    {"q": "Which key establishes a relationship between two tables?", "options": ["Primary key", "Foreign key", "Candidate key", "Alternate key"], "ans": "Foreign key", "sol": "A foreign key references a key, usually the primary key, in another table."},
+    {"q": "Which command is used to add a new column to an existing table?", "options": ["UPDATE TABLE", "ALTER TABLE", "MODIFY TABLE", "CHANGE TABLE"], "ans": "ALTER TABLE", "sol": "ALTER TABLE can add, modify, or drop columns and constraints."},
+    {"q": "What does 'SELECT * FROM employees;' return?", "options": ["Only the first row", "Only the employee names", "All columns and rows from employees", "Only the columns from employees"], "ans": "All columns and rows from employees", "sol": "* represents all columns, so the query returns all available records and columns."},
+    {"q": "Which clause is used to sort query results?", "options": ["SORT BY", "ORDER BY", "ARRANGE BY", "GROUP BY"], "ans": "ORDER BY", "sol": "ORDER BY sorts results in ascending (ASC) or descending (DESC) order."},
+    {"q": "What is the default sorting order of ORDER BY?", "options": ["Descending", "Random", "Ascending", "Reverse"], "ans": "Ascending", "sol": "If neither ASC nor DESC is specified, MySQL uses ascending order."},
+    {"q": "Which aggregate function counts the number of rows?", "options": ["SUM()", "COUNT()", "NUMBER()", "TOTAL()"], "ans": "COUNT()", "sol": "COUNT() returns the number of rows or non-NULL values, depending on its argument."},
+    {"q": "Which function calculates the average value of a column?", "options": ["AVG()", "MEAN()", "AVERAGE()", "MID()"], "ans": "AVG()", "sol": "AVG() calculates the arithmetic mean of numeric values."},
+    {"q": "Which function returns the largest value in a column?", "options": ["HIGH()", "TOP()", "MAX()", "LARGE()"], "ans": "MAX()", "sol": "MAX() returns the maximum value from the selected values."},
+    {"q": "Which clause is generally used with aggregate functions to group rows?", "options": ["ORDER BY", "GROUP BY", "WHERE", "SORT BY"], "ans": "GROUP BY", "sol": "GROUP BY groups rows having the same values so aggregate functions can be applied to each group."},
+    {"q": "Which clause is used to filter groups after GROUP BY?", "options": ["WHERE", "FILTER", "HAVING", "GROUP WHERE"], "ans": "HAVING", "sol": "WHERE filters individual rows before grouping, while HAVING filters groups after aggregation."},
+    {"q": "Which operator is used for pattern matching in MySQL?", "options": ["LIKE", "MATCHES", "PATTERN", "SEARCH"], "ans": "LIKE", "sol": "LIKE is used with wildcards such as % and _."},
+    {"q": "What does % represent in a LIKE expression?", "options": ["Exactly one character", "Any number of characters", "Only numbers", "A space"], "ans": "Any number of characters", "sol": "% represents zero or more characters."},
+    {"q": "What does _ represent in a LIKE expression?", "options": ["Any number of characters", "Exactly one character", "A numeric value", "A blank value"], "ans": "Exactly one character", "sol": "_ matches exactly one character."},
+    {"q": "Which statement is used to modify existing records?", "options": ["CHANGE", "MODIFY", "UPDATE", "ALTER"], "ans": "UPDATE", "sol": "UPDATE changes existing data in one or more rows."},
+    {"q": "Which statement is used to add new records to a table?", "options": ["ADD", "INSERT INTO", "APPEND", "CREATE ROW"], "ans": "INSERT INTO", "sol": "INSERT INTO adds one or more new records to a table."},
+    {"q": "What is the purpose of the JOIN operation?", "options": ["To delete tables", "To combine data from multiple tables", "To create a database", "To sort data"], "ans": "To combine data from multiple tables", "sol": "JOIN allows related data from two or more tables to be retrieved together."},
+    {"q": "Which JOIN returns all rows from the left table and matching rows from the right table?", "options": ["INNER JOIN", "RIGHT JOIN", "LEFT JOIN", "CROSS JOIN"], "ans": "LEFT JOIN", "sol": "A LEFT JOIN returns every row from the left table."},
+    {"q": "Which command is used to remove specific rows from a table?", "options": ["DROP", "REMOVE", "DELETE", "CLEAR"], "ans": "DELETE", "sol": "DELETE removes rows while keeping the table structure."},
+    {"q": "Which command permanently saves the changes made during a transaction?", "options": ["SAVE", "COMMIT", "CONFIRM", "STORE"], "ans": "COMMIT", "sol": "COMMIT permanently applies the changes made in the current transaction."},
+    {"q": "Which command is used to select a database for use?", "options": ["OPEN DATABASE", "USE DATABASE", "USE", "SELECT DATABASE"], "ans": "USE", "sol": "The USE statement selects the database on which subsequent SQL operations will be performed."},
+    {"q": "Which command displays the databases available in MySQL?", "options": ["SHOW DATABASES", "DISPLAY DATABASES", "LIST DATABASES", "GET DATABASES"], "ans": "SHOW DATABASES", "sol": "SHOW DATABASES; displays the databases available to the current MySQL user."},
+    {"q": "Which command displays the tables in the currently selected database?", "options": ["SHOW TABLES", "LIST TABLES", "DISPLAY TABLES", "GET TABLES"], "ans": "SHOW TABLES", "sol": "SHOW TABLES; lists all tables in the currently selected database."},
+    {"q": "Which command can be used to view the structure of a table?", "options": ["SHOW STRUCTURE", "DESCRIBE", "VIEW TABLE", "STRUCTURE TABLE"], "ans": "DESCRIBE", "sol": "DESCRIBE table_name; displays columns, data types, keys, default values, and other information."},
+    {"q": "Which data type is commonly used to store variable-length strings?", "options": ["CHAR", "VARCHAR", "TEXTONLY", "STRING"], "ans": "VARCHAR", "sol": "VARCHAR stores variable-length character strings."},
+    {"q": "Which data type is generally used to store whole numbers?", "options": ["INT", "FLOAT", "DECIMAL", "CHAR"], "ans": "INT", "sol": "INT is an integer data type used for whole-number values."},
+    {"q": "Which data type is suitable for storing decimal/fixed-point values such as monetary amounts?", "options": ["INT", "CHAR", "DECIMAL", "BOOLEAN"], "ans": "DECIMAL", "sol": "DECIMAL is useful when exact fixed-point precision is required."},
+    {"q": "What does the NOT NULL constraint specify?", "options": ["The column must contain unique values", "The column cannot contain NULL", "The column must contain numbers", "The column must be a primary key"], "ans": "The column cannot contain NULL", "sol": "NOT NULL requires a value to be supplied for the column."},
+    {"q": "Which constraint ensures that values in a column are unique?", "options": ["PRIMARY", "UNIQUE", "DISTINCT", "IDENTITY"], "ans": "UNIQUE", "sol": "A UNIQUE constraint prevents duplicate values in the constrained column."},
+    {"q": "Which can be used to assign an automatically increasing integer value to a column in MySQL?", "options": ["AUTO_INCREMENT", "AUTO_NUMBER", "INCREMENT BY", "IDENTITY"], "ans": "AUTO_INCREMENT", "sol": "AUTO_INCREMENT automatically generates sequential numeric values."},
+    {"q": "What does the NULL value represent in a database?", "options": ["Zero", "Empty string", "Unknown or missing value", "False"], "ans": "Unknown or missing value", "sol": "NULL represents the absence of a value."},
+    {"q": "Which operator is commonly used to test whether a value is NULL?", "options": ["= NULL", "IS NULL", "== NULL", "CHECK NULL"], "ans": "IS NULL", "sol": "SQL uses IS NULL and IS NOT NULL to test for NULL."},
+    {"q": "Which operator is used to specify multiple possible values in a condition?", "options": ["BETWEEN", "IN", "LIKE", "ANY"], "ans": "IN", "sol": "IN checks whether a value matches any value in a specified list."},
+    {"q": "What does 'SELECT * FROM employees WHERE salary BETWEEN 30000 AND 50000;' do?", "options": ["Finds salaries below 30,000", "Finds salaries above 50,000", "Finds salaries between 30,000 and 50,000", "Changes salaries to this range"], "ans": "Finds salaries between 30,000 and 50,000", "sol": "BETWEEN tests whether a value lies within an inclusive range."},
+    {"q": "Which logical operator requires both conditions to be true?", "options": ["OR", "AND", "NOT", "BOTH"], "ans": "AND", "sol": "AND returns true only when all specified conditions are true."},
+    {"q": "Which logical operator returns true if at least one condition is true?", "options": ["AND", "OR", "NOT", "ANY"], "ans": "OR", "sol": "OR evaluates to true when at least one condition is true."},
+    {"q": "What will 'SELECT COUNT(*) FROM employees;' return?", "options": ["Number of columns", "Number of employees/rows", "Sum of employee IDs", "Maximum employee ID"], "ans": "Number of employees/rows", "sol": "COUNT(*) counts all rows returned from the table."},
+    {"q": "Which aggregate function returns the total of numeric values?", "options": ["TOTAL()", "ADD()", "SUM()", "COUNT()"], "ans": "SUM()", "sol": "SUM() calculates the total of numeric values."},
+    {"q": "Which function returns the smallest value?", "options": ["MIN()", "LOW()", "SMALL()", "BOTTOM()"], "ans": "MIN()", "sol": "MIN() returns the minimum value from the selected values."},
+    {"q": "What is the main difference between WHERE and HAVING?", "options": ["They are exactly the same", "WHERE filters rows, while HAVING filters groups", "WHERE sorts data, while HAVING groups data", "HAVING can only be used without GROUP BY"], "ans": "WHERE filters rows, while HAVING filters groups", "sol": "WHERE filters rows before grouping, while HAVING filters groups after aggregation."},
+    {"q": "Which type of JOIN returns only rows having matching values in both tables?", "options": ["LEFT JOIN", "RIGHT JOIN", "INNER JOIN", "OUTER JOIN"], "ans": "INNER JOIN", "sol": "INNER JOIN returns only records where the join condition matches in both tables."},
+    {"q": "In an INNER JOIN query with 'ON e.dept_id = d.dept_id', what does ON specify?", "options": ["Sorting condition", "Filtering condition for individual rows only", "Join condition between the tables", "Grouping condition"], "ans": "Join condition between the tables", "sol": "The ON clause specifies how rows from two tables are related."},
+    {"q": "Which statement removes all rows from a table while retaining the table structure?", "options": ["DROP TABLE", "DELETE TABLE", "DELETE FROM table_name", "REMOVE TABLE"], "ans": "DELETE FROM table_name", "sol": "DELETE without a WHERE clause removes all rows while keeping the structure."},
+    {"q": "Which command can undo changes made during a transaction before they are committed?", "options": ["UNDO", "ROLLBACK", "CANCEL", "REVERSE"], "ans": "ROLLBACK", "sol": "ROLLBACK reverses uncommitted transaction changes."},
+    {"q": "Which of the following is a DDL command?", "options": ["SELECT", "INSERT", "UPDATE", "CREATE"], "ans": "CREATE", "sol": "DDL includes CREATE, ALTER, and DROP."}
+]
+
+st.set_page_config(page_title="MySQL MCQ Quiz", page_icon="📝")
+
+# Session State Initialization
+if "test_started" not in st.session_state:
+    st.session_state.test_started = False
+if "test_submitted" not in st.session_state:
+    st.session_state.test_submitted = False
+
+st.title("📝 MySQL Online Assessment Test")
+
+# Screen 1: Login & Rules
+if not st.session_state.test_started:
+    st.subheader("Student Details & Test Instructions")
+    student_name = st.text_input("Enter Your Full Name:")
+    student_id = st.text_input("Enter Student Roll / ID Number:")
+
+    st.markdown("""
+    ---
+    ### Rules:
+    - **Total Questions:** 20 (Randomly selected from 50)
+    - **Time Limit:** 20 Minutes (Countdown timer will begin as soon as you start)
+    - Each question carries **1 mark**.
+    ---
+    """)
+
+    if st.button("Start Test"):
+        if student_name and student_id:
+            st.session_state.student_name = student_name
+            st.session_state.student_id = student_id
+            st.session_state.test_started = True
+            st.session_state.start_time = time.time()
+            st.session_state.selected_questions = random.sample(ALL_QUESTIONS, 20)
+            st.rerun()
+        else:
+            st.warning("Please enter your name and student ID before starting.")
+
+# Screen 2: Test Dashboard
+elif st.session_state.test_started and not st.session_state.test_submitted:
+    time_limit = 20 * 60  # 20 minutes in seconds
+    elapsed_time = time.time() - st.session_state.start_time
+    remaining_time = time_limit - elapsed_time
+
+    if remaining_time <= 0:
+        st.session_state.test_submitted = True
+        st.warning("⏱️ Time limit reached! Your test has been automatically submitted.")
+        st.rerun()
+
+    mins, secs = divmod(int(remaining_time), 60)
+    st.sidebar.markdown(f"## ⏱️ Time Remaining: **{mins:02d}:{secs:02d}**")
+    st.sidebar.markdown(f"**Student:** {st.session_state.student_name}")
+    st.sidebar.markdown(f"**ID:** {st.session_state.student_id}")
+
+    st.write("---")
+    user_answers = {}
+
+    with st.form("quiz_form"):
+        for idx, q_data in enumerate(st.session_state.selected_questions, 1):
+            st.markdown(f"**Q{idx}. {q_data['q']}**")
+            user_answers[idx] = st.radio(
+                label=f"Select answer for Q{idx}:",
+                options=q_data["options"],
+                index=None,
+                key=f"q_{idx}"
+            )
+            st.write("")
+
+        submitted = st.form_submit_button("Submit Test")
+        if submitted:
+            st.session_state.user_answers = user_answers
+            st.session_state.test_submitted = True
+            st.rerun()
+
+# Screen 3: Results & Feedback
+else:
+    st.subheader(f"Results for {st.session_state.student_name} (ID: {st.session_state.student_id})")
+    score = 0
+    total = len(st.session_state.selected_questions)
+
+    for idx, q_data in enumerate(st.session_state.selected_questions, 1):
+        user_ans = st.session_state.get("user_answers", {}).get(idx)
+        if user_ans == q_data["ans"]:
+            score += 1
+
+    st.success(f"### Score: {score} / {total}")
+    st.markdown("---")
+    st.subheader("Question Breakdown & Solutions")
+
+    for idx, q_data in enumerate(st.session_state.selected_questions, 1):
+        user_ans = st.session_state.get("user_answers", {}).get(idx)
+        is_correct = (user_ans == q_data["ans"])
+
+        if is_correct:
+            st.markdown(f"**Q{idx}. {q_data['q']}** ✅")
+        else:
+            st.markdown(f"**Q{idx}. {q_data['q']}** ❌")
+
+        st.write(f"- **Your Answer:** {user_ans if user_ans else 'Not Answered'}")
+        st.write(f"- **Correct Answer:** {q_data['ans']}")
+        st.caption(f"💡 *Solution:* {q_data['sol']}")
+        st.write("---")
